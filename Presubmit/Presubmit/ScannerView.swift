@@ -2,45 +2,45 @@ import SwiftUI
 import VisionKit
 
 struct ScannerView: UIViewControllerRepresentable {
-    @Binding var scannedImage: UIImage?
+    @Binding var scannedImages: [UIImage] // Change to array
     @Environment(\.presentationMode) private var presentationMode
     
-    func makeUIViewController(context: UIViewControllerRepresentableContext<ScannerView>) -> VNDocumentCameraViewController {
-        let scannerViewController = VNDocumentCameraViewController()
-        scannerViewController.delegate = context.coordinator
-        return scannerViewController
+    func makeUIViewController(context: Context) -> VNDocumentCameraViewController {
+        let scanner = VNDocumentCameraViewController()
+        scanner.delegate = context.coordinator
+        return scanner
     }
     
-    func updateUIViewController(_ uiViewController: VNDocumentCameraViewController, context: UIViewControllerRepresentableContext<ScannerView>) {}
+    func updateUIViewController(_ uiViewController: VNDocumentCameraViewController, context: Context) {}
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
     
     class Coordinator: NSObject, VNDocumentCameraViewControllerDelegate {
-        var parent: ScannerView
+        let parent: ScannerView
         
         init(_ parent: ScannerView) {
             self.parent = parent
         }
         
         func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFinishWith scan: VNDocumentCameraScan) {
-            guard scan.pageCount >= 1 else {
-                controller.dismiss(animated: true)
-                return
+            // Capture all pages
+            var images = [UIImage]()
+            for pageIndex in 0..<scan.pageCount {
+                images.append(scan.imageOfPage(at: pageIndex))
             }
             
-            let image = scan.imageOfPage(at: 0)
-            parent.scannedImage = image
-            parent.presentationMode.wrappedValue.dismiss()
-        }
-        
-        func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFailWithError error: Error) {
-            print("Scanner failed with error: \(error.localizedDescription)")
+            parent.scannedImages = images
             parent.presentationMode.wrappedValue.dismiss()
         }
         
         func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
+            parent.presentationMode.wrappedValue.dismiss()
+        }
+        
+        func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFailWithError error: Error) {
+            print("Document scanner error: \(error.localizedDescription)")
             parent.presentationMode.wrappedValue.dismiss()
         }
     }

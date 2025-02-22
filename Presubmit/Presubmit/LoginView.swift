@@ -67,6 +67,7 @@ struct LoginView: View {
             .background(Color(UIColor.systemBackground))
             .navigationDestination(isPresented: $viewModel.isAuthenticated) {
                 CameraView(viewModel: viewModel)
+//                CameraView()
             }
         }
     }
