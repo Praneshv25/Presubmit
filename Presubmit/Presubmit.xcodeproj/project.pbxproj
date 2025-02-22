@@ -44,9 +44,22 @@
 		EFA7BF3D08F5DF7D9BCFE131 /* Pods-Presubmit-PresubmitUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Presubmit-PresubmitUITests.debug.xcconfig"; path = "Target Support Files/Pods-Presubmit-PresubmitUITests/Pods-Presubmit-PresubmitUITests.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		652B94B52D69EF2B003D73DC /* Exceptions for "Presubmit" folder in "Presubmit" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = ADDF17412D6992DE00CDAB9A /* Presubmit */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		ADDF17442D6992DE00CDAB9A /* Presubmit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				652B94B52D69EF2B003D73DC /* Exceptions for "Presubmit" folder in "Presubmit" target */,
+			);
 			path = Presubmit;
 			sourceTree = "<group>";
 		};
@@ -213,7 +226,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1600;
-				LastUpgradeCheck = 1600;
+				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					ADDF17412D6992DE00CDAB9A = {
 						CreatedOnToolsVersion = 16.0;
@@ -470,7 +483,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -542,8 +555,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Presubmit/Preview Content\"";
+				DEVELOPMENT_TEAM = 6QTVN3AFR3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Presubmit/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = Needed;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -554,7 +570,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pvels.Presubmit;
+				PRODUCT_BUNDLE_IDENTIFIER = danielklwu.Presubmit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -571,8 +587,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Presubmit/Preview Content\"";
+				DEVELOPMENT_TEAM = 6QTVN3AFR3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Presubmit/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = Needed;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -583,7 +602,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pvels.Presubmit;
+				PRODUCT_BUNDLE_IDENTIFIER = danielklwu.Presubmit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

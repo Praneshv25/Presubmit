@@ -9,7 +9,7 @@ struct ScannedDocument: Identifiable {
     var date: Date
 }
 
-struct ContentView: View {
+struct CameraView: View {
     @State private var showScanner = false
     @State private var scannedImage: UIImage?
     @State private var showError = false
