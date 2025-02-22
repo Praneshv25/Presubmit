@@ -1,25 +1,23 @@
 {
-  "symbol": "(0, 2), (2, 4)",
+  "symbol": "star",
   "annotations": [
+    { "text": "(0,2) (2,4)", "box_2d": [367, 75, 430, 124], "mistakes": "" },
+    { "text": "y = mx + b", "box_2d": [687, 96, 777, 135], "mistakes": "" },
     {
-      "text": "m=4-2/2-0=2",
-      "box_2d": [453, 111, 543, 208],
-      "mistakes": "The slope was calculated wrong. 4-2/2-0 = 2/2=1, not 2."
+      "text": "m = (4-2)/(2-0) = 2/2 = 2",
+      "box_2d": [480, 104, 713, 214],
+      "mistakes": "The slope calculation is incorrect.  It should be m = (4-2)/(2-0) = 2/2 = 1, not 2"
     },
     {
-      "text": "2 = m * 0 + b\nb = 2",
-      "box_2d": [538, 101, 670, 181],
+      "text": "2 = 2 * 0 + b",
+      "box_2d": [711, 104, 773, 215],
+      "mistakes": "Used the incorrect slope value from the previous calculation. Should be 2 = 1 * 0 + b"
+    },
+    { "text": "b=2", "box_2d": [773, 105, 836, 143], "mistakes": "" },
+    {
+      "text": "Section 1 [xmn, #2NQA]",
+      "box_2d": [589, 487, 863, 516],
       "mistakes": ""
-    },
-    {
-      "text": "x",
-      "box_2d": [587, 310, 774, 462],
-      "mistakes": "The x-axis of this graph is drawn incorrectly based on the points and calculated slope."
-    },
-    {
-      "text": "y",
-      "box_2d": [691, 274, 897, 310],
-      "mistakes": "The y-axis of this graph is drawn incorrectly based on the points and calculated slope."
     }
   ]
 }
