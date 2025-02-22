@@ -25,7 +25,7 @@ class SubmissionData(BaseModel):
 def process_submission(image, symbols=False):
     prompt = [
         """
-        Find mistakes in this person's work
+        Briefly list out mistakes in this person's work
         """, 
         image
     ]
@@ -40,6 +40,8 @@ def process_submission(image, symbols=False):
         f"""
         {response.text}
         
+        Identify
+        
         For the annotations field, return a bounding box for each of the section of math in this image. Include any mistakes about the math in these sections, if no mistakes just have an empty string.
         {f"For the symbol field, identify which of the following symbols is in the top corner {symbols}, if none are there leave field empty" if symbols else "" }
         """, 
@@ -48,17 +50,24 @@ def process_submission(image, symbols=False):
         in the format [ymin, xmin, ymax, xmax]. 
         """
     ]
-
-    response = client.models.generate_content(
-        model="gemini-1.5-pro",
-        contents=prompt,
-        config={
-            'response_mime_type': 'application/json',
-            'response_schema': SubmissionData,
-        },
-    )
-
-    print(response.text)
+    try:
+        response = client.models.generate_content(
+            model="gemini-1.5-pro",
+            contents=prompt,
+            config={
+                'response_mime_type': 'application/json',
+                'response_schema': SubmissionData,
+            },
+        )
+    except:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt,
+            config={
+                'response_mime_type': 'application/json',
+                'response_schema': SubmissionData,
+            },
+        )
     
     submissionData: SubmissionData = response.parsed
 

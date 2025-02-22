@@ -12,7 +12,9 @@ COPY app.py app.py
 COPY mrgemmy.py mrgemmy.py
 
 ENV PORT=8080
+ENV PYTHONUNBUFFERED=1
+
 
 EXPOSE 8080
 
-CMD [ "gunicorn", "-b", "0.0.0.0:8080", "app:app"]
+CMD [ "gunicorn", "-b", "0.0.0.0:8080", "--capture-output", "--log-level", "debug", "app:app"]

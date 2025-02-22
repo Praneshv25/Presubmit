@@ -79,8 +79,11 @@ def process_image():
     # print("got request")
     try:
         request_data = SingleImageData.model_validate_json(request.data) 
+        
+        print("image len", len(request_data.image))
 
         image_data = base64.b64decode(request_data.image)
+        
         image_file = Image.open(io.BytesIO(image_data))
 
         symbols = request_data.symbols
@@ -89,8 +92,10 @@ def process_image():
         return jsonify(results.model_dump()), 200
 
     except ValueError as e:
+        print("value exception", e)
         return jsonify({"error": str(e)}), 401
     except Exception as e:
+        print("unknown exception", e)
         return jsonify({"error": "Image processing failed", "details": str(e)}), 500
     
 @app.post("/api/process-multiple-images")
