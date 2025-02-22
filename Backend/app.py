@@ -18,7 +18,6 @@ load_dotenv()
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")  # Replace with your project ID
 
-
 class Annotation(BaseModel):
     text: str
     box_2d: list[int]
@@ -39,14 +38,21 @@ def authenticate(func: Callable) -> Callable:
     @wraps(func)  # Preserves function metadata
     def wrapper(*args, **kwargs):
         try:
+            print(request.headers)
             auth_header = request.headers.get("Authorization")
             if not auth_header:
                 raise ValueError("Missing Authorization header")
+            
+            print(auth_header)
                 
             id_token_str = auth_header.split("Bearer ")[1]
+            print(id_token_str)
+            
             id_info = id_token.verify_oauth2_token(
                 id_token_str, requests.Request(), GOOGLE_CLIENT_ID
             )
+            
+            print(id_info)
 
             if id_info["iss"] not in [
                 "accounts.google.com",
@@ -79,8 +85,7 @@ def process_image():
         symbols = request_data.symbols
 
         results = process_submission(image_file, symbols) # type: ignore
-        submission_data = SubmissionData(symbol="detected_symbol", annotations=results)
-        return jsonify(submission_data.model_dump()), 200
+        return jsonify(results.model_dump()), 200
 
     except ValueError as e:
         return jsonify({"error": str(e)}), 401
@@ -88,23 +93,9 @@ def process_image():
         return jsonify({"error": "Image processing failed", "details": str(e)}), 500
     
 @app.post("/api/process-multiple-images")
+@authenticate
 def process_multiple_images():
     try:
-
-        id_token_str = request.headers.get("Authorization").split("Bearer ")[1]
-        id_info = id_token.verify_oauth2_token(id_token_str, requests.Request(), GOOGLE_CLIENT_ID)
-
-        id_info = id_token.verify_oauth2_token(
-            id_token_str, requests.Request(), GOOGLE_CLIENT_ID
-        )
-
-        if id_info["iss"] not in [
-            "accounts.google.com",
-            "https://accounts.google.com",
-        ]:
-            raise ValueError("Wrong issuer.")
-
-
         request_data = MultiImageData.model_validate_json(request.data)
         results = []
 
@@ -125,7 +116,6 @@ def process_multiple_images():
                   "image": image_data.image,
                   "error": str(e)
                 })
-
 
         return jsonify(results), 200
 
