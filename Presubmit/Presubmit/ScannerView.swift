@@ -1,6 +1,6 @@
 import SwiftUI
 import VisionKit
-import UIKit
+
 struct ScannerView: UIViewControllerRepresentable {
     @Binding var scannedImage: UIImage?
     @Environment(\.presentationMode) private var presentationMode
