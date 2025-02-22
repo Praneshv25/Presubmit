@@ -15,7 +15,7 @@ import os
 
 app = Flask(__name__)
 load_dotenv()
-cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+cors = CORS(app)
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")  # Replace with your project ID
 
 class Annotation(BaseModel):
@@ -37,22 +37,23 @@ class MultiImageData(BaseModel):
 def authenticate(func: Callable) -> Callable:
     @wraps(func)  # Preserves function metadata
     def wrapper(*args, **kwargs):
+        # print("insidewrapper")
         try:
-            print(request.headers)
+            # print(request.headers)
             auth_header = request.headers.get("Authorization")
             if not auth_header:
                 raise ValueError("Missing Authorization header")
             
-            print(auth_header)
+            # print(auth_header)
                 
             id_token_str = auth_header.split("Bearer ")[1]
-            print(id_token_str)
+            # print(id_token_str)
             
             id_info = id_token.verify_oauth2_token(
                 id_token_str, requests.Request(), GOOGLE_CLIENT_ID
             )
             
-            print(id_info)
+            # print(id_info)
 
             if id_info["iss"] not in [
                 "accounts.google.com",
@@ -68,7 +69,6 @@ def authenticate(func: Callable) -> Callable:
     return wrapper
 
 @app.route("/")
-@authenticate
 def hello_world():
     return "<p>Presubmit backend!</p>"
 
@@ -76,7 +76,7 @@ def hello_world():
 @app.post("/api/process-image")
 @authenticate
 def process_image():
-    print("got request")
+    # print("got request")
     try:
         request_data = SingleImageData.model_validate_json(request.data) 
 
@@ -128,4 +128,4 @@ def process_multiple_images():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8080)
