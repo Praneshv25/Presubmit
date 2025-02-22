@@ -18,6 +18,11 @@ struct CameraView: View {
     @State private var showingNameInput = false
     @State private var documentName = ""
     
+    // logout helpers
+    @Environment(\.presentationMode) private var presentationMode: Binding<PresentationMode>
+    @ObservedObject var viewModel: LoginViewModel
+    @State private var navigateToLogin = false
+    
     var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
@@ -26,81 +31,94 @@ struct CameraView: View {
     }
     
     var body: some View {
-        NavigationView {
-            VStack {
-                if scannedDocuments.isEmpty {
-                    Text("No scanned documents")
-                        .foregroundColor(.gray)
-                } else {
-                    List {
-                        ForEach(scannedDocuments) { document in
-                            VStack(alignment: .leading) {
-                                Image(uiImage: document.image)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(maxHeight: 200)
-                                    .cornerRadius(8)
-                                
-                                Text(document.fileName)
-                                    .font(.headline)
-                                Text("Scanned on: \(dateFormatter.string(from: document.date))")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.vertical, 8)
+        VStack {
+            if scannedDocuments.isEmpty {
+                Text("No scanned documents")
+                    .foregroundColor(.gray)
+            } else {
+                List {
+                    ForEach(scannedDocuments) { document in
+                        VStack(alignment: .leading) {
+                            Image(uiImage: document.image)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxHeight: 200)
+                                .cornerRadius(8)
+                            
+                            Text(document.fileName)
+                                .font(.headline)
+                            Text("Scanned on: \(dateFormatter.string(from: document.date))")
+                                .font(.caption)
+                                .foregroundColor(.gray)
                         }
-                        .onDelete(perform: deleteDocuments)
+                        .padding(.vertical, 8)
                     }
+                    .onDelete(perform: deleteDocuments)
                 }
-                
+            }
+            
+            Button(action: {
+                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    showScanner = true
+                } else {
+                    errorMessage = "Camera is not available"
+                    showError = true
+                }
+            }) {
+                HStack {
+                    Image(systemName: "doc.viewfinder")
+                    Text("Scan Document")
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .background(Color.blue)
+                .cornerRadius(10)
+            }
+            .padding()
+        }
+        .navigationBarBackButtonHidden(true)
+        .navigationTitle("Document Scanner")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: {
-                    if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                        showScanner = true
-                    } else {
-                        errorMessage = "Camera is not available"
-                        showError = true
-                    }
+                    viewModel.signOut()
                 }) {
                     HStack {
-                        Image(systemName: "doc.viewfinder")
-                        Text("Scan Document")
-                    }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(10)
-                }
-                .padding()
-            }
-            .navigationTitle("Document Scanner")
-            .sheet(isPresented: $showScanner) {
-                ScannerView(scannedImage: $scannedImage)
-                    .onDisappear {
-                        if scannedImage != nil {
-                            showingNameInput = true
-                        }
-                    }
-            }
-            .alert("Name Your Document", isPresented: $showingNameInput) {
-                TextField("Document Name", text: $documentName)
-                Button("Save") {
-                    if let image = scannedImage {
-                        saveDocument(image: image, name: documentName)
-                        scannedImage = nil
-                        documentName = ""
+                        Image(systemName: "arrow.left")
+                            .foregroundColor(.red)
+                        Text("Log Out")
+                            .foregroundColor(.red)
                     }
                 }
-                Button("Cancel", role: .cancel) {
+            }
+        }
+        .sheet(isPresented: $showScanner) {
+            ScannerView(scannedImage: $scannedImage)
+                .onDisappear {
+                    if scannedImage != nil {
+                        showingNameInput = true
+                    }
+                }
+        }
+        .alert("Name Your Document", isPresented: $showingNameInput) {
+            TextField("Document Name", text: $documentName)
+            Button("Save") {
+                if let image = scannedImage {
+                    saveDocument(image: image, name: documentName)
                     scannedImage = nil
                     documentName = ""
                 }
             }
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(errorMessage)
+            Button("Cancel", role: .cancel) {
+                scannedImage = nil
+                documentName = ""
             }
+        }
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage)
         }
     }
     

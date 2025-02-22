@@ -75,6 +75,7 @@ class LoginViewModel: ObservableObject {
         GIDSignIn.sharedInstance.signOut()
         DispatchQueue.main.async {
             self.isAuthenticated = false
+            print("User signed out successfully")
         }
     }
 }
