@@ -70,4 +70,11 @@ class LoginViewModel: ObservableObject {
             }
         }
     }
+    
+    func signOut() {
+        GIDSignIn.sharedInstance.signOut()
+        DispatchQueue.main.async {
+            self.isAuthenticated = false
+        }
+    }
 }

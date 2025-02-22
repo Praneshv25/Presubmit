@@ -13,9 +13,26 @@ struct LoginView: View {
     var body: some View {
         NavigationStack{
             VStack(spacing: 20) {
-                Text("Welcome")
-                    .font(.system(size: 32, weight: .bold))
-                    .padding(.bottom, 40)
+                Spacer()
+                VStack(spacing: 10) {
+                    Image(systemName: "doc.text.viewfinder") // SF Symbol for document scanning
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 80, height: 80)
+                        .foregroundColor(.blue)
+
+                    Text("PRESUBMIT")
+                        .font(.system(size: 50, weight: .heavy, design: .rounded))
+                        .foregroundColor(.primary)
+                    
+                    Text("Your Digital Proofreader for Physical Documents.")
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .italic()
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding([.leading, .bottom, .trailing], 20)
+                }
+                
                 
                 Button(action: { viewModel.signInWithGoogle() }) {
                     HStack {
@@ -31,6 +48,8 @@ struct LoginView: View {
                     .cornerRadius(10)
                 }
                 .disabled(viewModel.isLoading)
+                
+                Spacer(minLength: 30)
                 
                 if viewModel.isLoading {
                     ProgressView()

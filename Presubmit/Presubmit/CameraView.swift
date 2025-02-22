@@ -77,7 +77,7 @@ struct CameraView: View {
             .sheet(isPresented: $showScanner) {
                 ScannerView(scannedImage: $scannedImage)
                     .onDisappear {
-                        if let image = scannedImage {
+                        if scannedImage != nil {
                             showingNameInput = true
                         }
                     }
