@@ -5,7 +5,7 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
-	 		<key>CFBundleTypeRole</key>
+			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>

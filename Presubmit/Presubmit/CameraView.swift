@@ -1,7 +1,6 @@
 import SwiftUI
 import VisionKit
 import UIKit
-import FirebaseAuth
 
 struct ScannedDocument: Identifiable {
     let id = UUID()
@@ -19,11 +18,7 @@ struct CameraView: View {
     @State private var scannedDocuments: [ScannedDocument] = []
     @State private var showingNameInput = false
     @State private var documentName = ""
-    
-    // logout helpers
-    @Environment(\.presentationMode) private var presentationMode: Binding<PresentationMode>
-    @ObservedObject var viewModel: LoginViewModel
-    @State private var navigateToLogin = false
+    @ObservedObject var loginViewModel: LoginViewModel = LoginViewModel()
     
     var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
@@ -33,94 +28,85 @@ struct CameraView: View {
     }
     
     var body: some View {
-        VStack {
-            if scannedDocuments.isEmpty {
-                Text("No scanned documents")
-                    .foregroundColor(.gray)
-            } else {
-                List {
-                    ForEach(scannedDocuments) { document in
-                        VStack(alignment: .leading) {
-                            Image(uiImage: document.image)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(maxHeight: 200)
-                                .cornerRadius(8)
-                            
-                            Text(document.fileName)
-                                .font(.headline)
-                            Text("Scanned on: \(dateFormatter.string(from: document.date))")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                        .padding(.vertical, 8)
-                    }
-                    .onDelete(perform: deleteDocuments)
-                }
-            }
-            
-            Button(action: {
-                if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                    showScanner = true
+        NavigationView {
+            VStack {
+                if scannedDocuments.isEmpty {
+                    Text("No scanned documents")
+                        .foregroundColor(.gray)
                 } else {
-                    errorMessage = "Camera is not available"
-                    showError = true
+                    List {
+                        ForEach(scannedDocuments) { document in
+                            NavigationLink(destination: DocumentDetailView(document: document)) {
+                                VStack(alignment: .leading) {
+                                    Image(uiImage: document.image)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(maxHeight: 200)
+                                        .cornerRadius(8)
+                                    
+                                    Text(document.fileName)
+                                        .font(.headline)
+                                    Text("Scanned on: \(dateFormatter.string(from: document.date))")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                .padding(.vertical, 8)
+                            }
+                        }
+                        .onDelete(perform: deleteDocuments)
+                    }
                 }
-            }) {
-                HStack {
-                    Image(systemName: "doc.viewfinder")
-                    Text("Scan Document")
-                }
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.blue)
-                .cornerRadius(10)
-            }
-            .padding()
-        }
-        .navigationBarBackButtonHidden(true)
-        .navigationTitle("Document Scanner")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+                
                 Button(action: {
-                    viewModel.signOut()
+                    if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                        showScanner = true
+                    } else {
+                        errorMessage = "Camera is not available"
+                        showError = true
+                    }
                 }) {
                     HStack {
-                        Image(systemName: "arrow.left")
-                            .foregroundColor(.red)
-                        Text("Log Out")
-                            .foregroundColor(.red)
+                        Image(systemName: "doc.viewfinder")
+                        Text("Scan Document")
                     }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
                 }
+                .padding()
             }
-        }
-        .sheet(isPresented: $showScanner) {
-            ScannerView(scannedImage: $scannedImage)
-                .onDisappear {
-                    if scannedImage != nil {
-                        showingNameInput = true
+            .navigationTitle("Document Scanner")
+            .sheet(isPresented: $showScanner) {
+                ScannerView(scannedImage: $scannedImage)
+                    .onDisappear {
+                        if let image = scannedImage {
+                            showingNameInput = true
+                        }
+                    }
+            }
+            .alert("Name Your Document", isPresented: $showingNameInput) {
+                TextField("Document Name", text: $documentName)
+                Button("Save") {
+                    if let image = scannedImage {
+                        Task {
+                            await saveDocument(image: image, name: documentName)
+                            scannedImage = nil
+                            documentName = ""
+                        }
                     }
                 }
-        }
-        .alert("Name Your Document", isPresented: $showingNameInput) {
-            TextField("Document Name", text: $documentName)
-            Button("Save") {
-                if let image = scannedImage {
-                    saveDocument(image: image, name: documentName)
+                Button("Cancel", role: .cancel) {
                     scannedImage = nil
                     documentName = ""
                 }
             }
-            Button("Cancel", role: .cancel) {
-                scannedImage = nil
-                documentName = ""
+            .alert("Error", isPresented: $showError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage)
             }
-        }
-        .alert("Error", isPresented: $showError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(errorMessage)
         }
     }
     
@@ -138,17 +124,28 @@ struct CameraView: View {
             scannedDocuments.append(document)
             
             // Save locally and upload
-            if let data = image.jpegData(compressionQuality: 0.5) {
+            if let data = image.jpegData(compressionQuality: 0.8) {
+                let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                let fileURL = documentsDirectory.appendingPathComponent("\(fileName).jpg")
                 
                 do {
-                    let base64String = data.base64EncodedString()
+                    // Save locally
+                    try data.write(to: fileURL)
+                    print("File saved locally at: \(fileURL)")
                     
-//                    print(base64String)
+                    // Prepare for upload
+                    let compressedData = image.jpegData(compressionQuality: 0.5)
+                    let base64String = compressedData?.base64EncodedString() ?? ""
                     
-//                    print("Base64 string length: \(base64String.count)")
+                    // Print size information
+                    let originalSize = Double(data.count) / 1024.0
+                    let compressedSize = Double(compressedData?.count ?? 0) / 1024.0
+                    print("Original size: \(originalSize) KB")
+                    print("Compressed size: \(compressedSize) KB")
+                    print("Base64 string length: \(base64String.count)")
                     
                     // Create upload URL request
-                    guard let url = URL(string: "http://128.210.107.131:5000/api/process-image") else {
+                    guard let url = URL(string: "http://127.0.0.1:5000/api/process-image") else {
                         print("Invalid URL")
                         return
                     }
@@ -157,10 +154,8 @@ struct CameraView: View {
                     request.httpMethod = "POST"
                     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                     // Add Authorization header
-                    guard let id_token = try await Auth.auth().currentUser?.getIDToken() else { return }
-
-                    request.setValue("Bearer \(id_token)", forHTTPHeaderField: "Authorization")
-                        
+                    request.setValue("Bearer \(self.loginViewModel.userToken)", forHTTPHeaderField: "Authorization")
+                    
                     // Create JSON payload
                     let payload: [String: Any] = [
                         "image": base64String,
