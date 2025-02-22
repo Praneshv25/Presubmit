@@ -1,0 +1,25 @@
+{
+  "symbol": "(0, 2), (2, 4)",
+  "annotations": [
+    {
+      "text": "m=4-2/2-0=2",
+      "box_2d": [453, 111, 543, 208],
+      "mistakes": "The slope was calculated wrong. 4-2/2-0 = 2/2=1, not 2."
+    },
+    {
+      "text": "2 = m * 0 + b\nb = 2",
+      "box_2d": [538, 101, 670, 181],
+      "mistakes": ""
+    },
+    {
+      "text": "x",
+      "box_2d": [587, 310, 774, 462],
+      "mistakes": "The x-axis of this graph is drawn incorrectly based on the points and calculated slope."
+    },
+    {
+      "text": "y",
+      "box_2d": [691, 274, 897, 310],
+      "mistakes": "The y-axis of this graph is drawn incorrectly based on the points and calculated slope."
+    }
+  ]
+}
