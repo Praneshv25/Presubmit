@@ -17,6 +17,7 @@ class LoginViewModel: ObservableObject {
     @Published var isAuthenticated = false
     @Published var userToken: String?
     
+    
     func signInWithGoogle() {
         isLoading = true
         
@@ -52,7 +53,7 @@ class LoginViewModel: ObservableObject {
             }
             
             // Obtain user access token
-            self?.userToken = user.accessToken.tokenString
+            self?.userToken = user.idToken?.tokenString
             
             let credential = GoogleAuthProvider.credential(withIDToken: idToken,
                                                          accessToken: user.accessToken.tokenString)

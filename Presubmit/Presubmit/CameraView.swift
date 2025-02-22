@@ -7,6 +7,7 @@ struct ScannedDocument: Identifiable {
     var image: UIImage
     var fileName: String
     var date: Date
+    var mistakes: [MistakeItem]?
 }
 
 struct CameraView: View {
@@ -17,6 +18,7 @@ struct CameraView: View {
     @State private var scannedDocuments: [ScannedDocument] = []
     @State private var showingNameInput = false
     @State private var documentName = ""
+    @ObservedObject var loginViewModel: LoginViewModel = LoginViewModel()
     
     var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
@@ -34,20 +36,22 @@ struct CameraView: View {
                 } else {
                     List {
                         ForEach(scannedDocuments) { document in
-                            VStack(alignment: .leading) {
-                                Image(uiImage: document.image)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(maxHeight: 200)
-                                    .cornerRadius(8)
-                                
-                                Text(document.fileName)
-                                    .font(.headline)
-                                Text("Scanned on: \(dateFormatter.string(from: document.date))")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
+                            NavigationLink(destination: DocumentDetailView(document: document)) {
+                                VStack(alignment: .leading) {
+                                    Image(uiImage: document.image)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(maxHeight: 200)
+                                        .cornerRadius(8)
+                                    
+                                    Text(document.fileName)
+                                        .font(.headline)
+                                    Text("Scanned on: \(dateFormatter.string(from: document.date))")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                .padding(.vertical, 8)
                             }
-                            .padding(.vertical, 8)
                         }
                         .onDelete(perform: deleteDocuments)
                     }
@@ -86,9 +90,11 @@ struct CameraView: View {
                 TextField("Document Name", text: $documentName)
                 Button("Save") {
                     if let image = scannedImage {
-                        saveDocument(image: image, name: documentName)
-                        scannedImage = nil
-                        documentName = ""
+                        Task {
+                            await saveDocument(image: image, name: documentName)
+                            scannedImage = nil
+                            documentName = ""
+                        }
                     }
                 }
                 Button("Cancel", role: .cancel) {
@@ -104,30 +110,96 @@ struct CameraView: View {
         }
     }
     
-    private func saveDocument(image: UIImage, name: String) {
-        // Create document object
-        let fileName = name.isEmpty ? "Document_\(Date())" : name
-        let document = ScannedDocument(image: image, fileName: fileName, date: Date())
-        scannedDocuments.append(document)
-        
-        // Save to local storage
-        if let data = image.jpegData(compressionQuality: 0.8) {
-            let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let fileURL = documentsDirectory.appendingPathComponent("\(fileName).jpg")
+    private func saveDocument(image: UIImage, name: String) async {
+            print("here")
+            let fileName = name.isEmpty ? "Document_\(Date())" : name
             
-            do {
-                try data.write(to: fileURL)
-                print("File saved successfully at: \(fileURL)")
-            } catch {
-                print("Error saving file: \(error)")
-                errorMessage = "Failed to save document"
-                showError = true
+            // Create document object
+            let document = ScannedDocument(
+                image: image,
+                fileName: fileName,
+                date: Date(),
+                mistakes: nil
+            )
+            scannedDocuments.append(document)
+            
+            // Save locally and upload
+            if let data = image.jpegData(compressionQuality: 0.8) {
+                let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                let fileURL = documentsDirectory.appendingPathComponent("\(fileName).jpg")
+                
+                do {
+                    // Save locally
+                    try data.write(to: fileURL)
+                    print("File saved locally at: \(fileURL)")
+                    
+                    // Prepare for upload
+                    let compressedData = image.jpegData(compressionQuality: 0.5)
+                    let base64String = compressedData?.base64EncodedString() ?? ""
+                    
+                    // Print size information
+                    let originalSize = Double(data.count) / 1024.0
+                    let compressedSize = Double(compressedData?.count ?? 0) / 1024.0
+                    print("Original size: \(originalSize) KB")
+                    print("Compressed size: \(compressedSize) KB")
+                    print("Base64 string length: \(base64String.count)")
+                    
+                    // Create upload URL request
+                    guard let url = URL(string: "http://127.0.0.1:5000/api/process-image") else {
+                        print("Invalid URL")
+                        return
+                    }
+                    
+                    var request = URLRequest(url: url)
+                    request.httpMethod = "POST"
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                    // Add Authorization header
+                    request.setValue("Bearer \(self.loginViewModel.userToken)", forHTTPHeaderField: "Authorization")
+                    
+                    // Create JSON payload
+                    let payload: [String: Any] = [
+                        "image": base64String,
+                        "symbols": []
+                    ]
+                    
+                    request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
+                    
+                    // Send request
+                    do {
+                        let (responseData, response) = try await URLSession.shared.data(for: request)
+                        
+                        
+                        // Print response body for debugging
+                        if let responseString = String(data: responseData, encoding: .utf8) {
+                            print("Response body: \(responseString)")
+                        }
+                        
+                        if let httpResponse = response as? HTTPURLResponse {
+                            print("Upload status code: \(httpResponse.statusCode)")
+                            if httpResponse.statusCode != 200 {
+                                await MainActor.run {
+                                    errorMessage = "Upload failed with status: \(httpResponse.statusCode)"
+                                    showError = true
+                                }
+                            }
+                        }
+                    } catch {
+                        print("Upload error: \(error)")
+                        await MainActor.run {
+                            errorMessage = "Upload failed: \(error.localizedDescription)"
+                            showError = true
+                        }
+                    }
+                    
+                } catch {
+                    print("Error saving file: \(error)")
+                    errorMessage = "Failed to save document"
+                    showError = true
+                }
             }
         }
-    }
     
     private func deleteDocuments(at offsets: IndexSet) {
-        // Delete from local storage
         for index in offsets {
             let document = scannedDocuments[index]
             let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -140,7 +212,6 @@ struct CameraView: View {
             }
         }
         
-        // Delete from array
         scannedDocuments.remove(atOffsets: offsets)
     }
 }
