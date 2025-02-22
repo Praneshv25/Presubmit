@@ -51,7 +51,6 @@ struct DrawingView: View {
                         }
                     }
                     .onEnded { _ in
-                        recognizeSymbol()
                         currentLine = Line(points: [])
                     }
             )
@@ -68,38 +67,5 @@ struct DrawingView: View {
             .font(.caption)
         }
         .frame(width: 150, height: 200)
-    }
-    
-    private func recognizeSymbol() {
-        guard let points = lines.last?.points, !points.isEmpty else { return }
-        
-        let xCoordinates = points.map { $0.x }
-        let yCoordinates = points.map { $0.y }
-        let minX = xCoordinates.min() ?? 0
-        let maxX = xCoordinates.max() ?? 0
-        let minY = yCoordinates.min() ?? 0
-        let maxY = yCoordinates.max() ?? 0
-        
-        let width = maxX - minX
-        let height = maxY - minY
-        
-        // Print debugging information
-        print("Width: \(width)")
-        print("Height: \(height)")
-        print("Number of points: \(points.count)")
-        
-        // Simple aspect ratio check
-        let aspectRatio = width / height
-        print("Aspect ratio: \(aspectRatio)")
-        
-        if aspectRatio > 0.8 && aspectRatio < 1.2 {
-            recognizedSymbol = "Square/Circle"
-        } else if width > height {
-            recognizedSymbol = "Horizontal"
-        } else {
-            recognizedSymbol = "Vertical"
-        }
-        
-        print("Recognized as: \(recognizedSymbol)")
     }
 }

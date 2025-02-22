@@ -76,6 +76,7 @@ def hello_world():
 @app.post("/api/process-image")
 @authenticate
 def process_image():
+    print("got request")
     try:
         request_data = SingleImageData.model_validate_json(request.data) 
 

@@ -47,7 +47,7 @@ struct LoginView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(UIColor.systemBackground))
             .navigationDestination(isPresented: $viewModel.isAuthenticated) {
-                CameraView(loginViewModel: self.viewModel)
+                CameraView()
             }
         }
     }
