@@ -1,6 +1,7 @@
 import SwiftUI
 import VisionKit
 import UIKit
+import GoogleSignIn
 
 struct ScannedDocument: Identifiable {
     let id = UUID()
@@ -128,93 +129,24 @@ struct CameraView: View {
     }
     
     private func saveDocument(image: UIImage, name: String) async {
-            print("here")
-            let fileName = name.isEmpty ? "Document_\(Date())" : name
-            
-            // Create document object
-            let document = ScannedDocument(
-                image: image,
-                fileName: fileName,
-                date: Date(),
-                mistakes: nil
-            )
-            scannedDocuments.append(document)
-            
-            // Save locally and upload
-            if let data = image.jpegData(compressionQuality: 0.8) {
-                let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                let fileURL = documentsDirectory.appendingPathComponent("\(fileName).jpg")
-                
-                do {
-                    // Save locally
-                    try data.write(to: fileURL)
-                    print("File saved locally at: \(fileURL)")
-                    
-                    // Prepare for upload
-                    let compressedData = image.jpegData(compressionQuality: 0.5)
-                    let base64String = compressedData?.base64EncodedString() ?? ""
-                    
-                    // Print size information
-                    let originalSize = Double(data.count) / 1024.0
-                    let compressedSize = Double(compressedData?.count ?? 0) / 1024.0
-                    print("Original size: \(originalSize) KB")
-                    print("Compressed size: \(compressedSize) KB")
-                    print("Base64 string length: \(base64String.count)")
-                    
-                    // Create upload URL request
-                    guard let url = URL(string: "http://127.0.0.1:5000/api/process-image") else {
-                        print("Invalid URL")
-                        return
-                    }
-                    
-                    var request = URLRequest(url: url)
-                    request.httpMethod = "POST"
-                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                    // Add Authorization header
-                    request.setValue("Bearer \(self.viewModel.userToken)", forHTTPHeaderField: "Authorization")
-                    
-                    // Create JSON payload
-                    let payload: [String: Any] = [
-                        "image": base64String,
-                        "symbols": []
-                    ]
-                    
-                    request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
-                    
-                    // Send request
-                    do {
-                        let (responseData, response) = try await URLSession.shared.data(for: request)
-                        
-                        
-                        // Print response body for debugging
-                        if let responseString = String(data: responseData, encoding: .utf8) {
-                            print("Response body: \(responseString)")
-                        }
-                        
-                        if let httpResponse = response as? HTTPURLResponse {
-                            print("Upload status code: \(httpResponse.statusCode)")
-                            if httpResponse.statusCode != 200 {
-                                await MainActor.run {
-                                    errorMessage = "Upload failed with status: \(httpResponse.statusCode)"
-                                    showError = true
-                                }
-                            }
-                        }
-                    } catch {
-                        print("Upload error: \(error)")
-                        await MainActor.run {
-                            errorMessage = "Upload failed: \(error.localizedDescription)"
-                            showError = true
-                        }
-                    }
-                    
-                } catch {
-                    print("Error saving file: \(error)")
-                    errorMessage = "Failed to save document"
-                    showError = true
-                }
-            }
+        print("here")
+        let fileName = name.isEmpty ? "Document_\(Date())" : name
+        
+        // Create document object
+        let document = ScannedDocument(
+            image: image,
+            fileName: fileName,
+            date: Date(),
+            mistakes: nil
+        )
+        scannedDocuments.append(document)
+        
+        guard let token = GIDSignIn.sharedInstance.currentUser?.idToken?.tokenString else {
+            return
         }
+        
+        let apiClient = ImageAPIClient(authToken: token)
+    }
     
     private func deleteDocuments(at offsets: IndexSet) {
         for index in offsets {
