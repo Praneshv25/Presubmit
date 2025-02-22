@@ -8,7 +8,7 @@
 import Foundation
 
 struct MistakeItem: Codable, Identifiable {
-    let id = UUID()
+    let id : UUID = UUID()
     let text: String
     let box_2d: [Int]
     let mistakes: String

@@ -22,7 +22,46 @@ struct Annotation: Codable {
 
 struct ProcessImageResponse: Codable {
     let annotations: [Annotation]
+    let symbol: String?
 }
+
+let jsonData = """
+{
+    "symbol": "star",
+    "annotations": [
+        { 
+            "text": "(0,2) (2,4)", 
+            "box_2d": [367, 75, 430, 124], 
+            "mistakes": "" 
+        },
+        { 
+            "text": "y = mx + b", 
+            "box_2d": [687, 96, 777, 135], 
+            "mistakes": "" 
+        },
+        { 
+            "text": "m = (4-2)/(2-0) = 2/2 = 2", 
+            "box_2d": [480, 104, 713, 214], 
+            "mistakes": "The slope calculation is incorrect. It should be m = (4-2)/(2-0) = 2/2 = 1, not 2" 
+        },
+        { 
+            "text": "2 = 2 * 0 + b", 
+            "box_2d": [711, 104, 773, 215], 
+            "mistakes": "Used the incorrect slope value from the previous calculation. Should be 2 = 1 * 0 + b" 
+        },
+        { 
+            "text": "b=2", 
+            "box_2d": [773, 105, 836, 143], 
+            "mistakes": "" 
+        },
+        { 
+            "text": "Section 1 [xmn, #2NQA]", 
+            "box_2d": [589, 487, 863, 516], 
+            "mistakes": "" 
+        }
+    ]
+}
+""".data(using: .utf8)!
 
 enum ImageProcessingError: Error {
     case invalidImage
@@ -42,12 +81,14 @@ class ImageAPIClient {
     }
     
     func processImage(_ image: UIImage, symbols: [String] = []) async throws -> ProcessImageResponse {
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+        guard let imageData = image.jpegData(compressionQuality: 0.5) else {
             throw ImageProcessingError.invalidImage
         }
         
         // Convert image data to base64
         let base64Image = imageData.base64EncodedString()
+        
+        print(base64Image.count)
         
         // Prepare request body
         let requestBody: [String: Any] = [
@@ -70,15 +111,17 @@ class ImageAPIClient {
         do {
             let (data, response) = try await session.data(for: request)
             
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw ImageProcessingError.invalidResponse
-            }
+//            guard let httpResponse = response as? HTTPURLResponse else {
+//                throw ImageProcessingError.invalidResponse
+//            }
             
-            switch httpResponse.statusCode {
+//            switch httpResponse.statusCode {
+            switch 200 {
             case 200:
                 print("200")
                 let decoder = JSONDecoder()
-                return try decoder.decode(ProcessImageResponse.self, from: data)
+                return try decoder.decode(ProcessImageResponse.self, from: jsonData)
+//                return try decoder.decode(ProcessImageResponse.self, from: data)
             case 401:
                 print("401")
                 throw ImageProcessingError.authenticationError
