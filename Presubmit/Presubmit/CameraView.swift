@@ -76,12 +76,14 @@ struct CameraView: View {
     @State private var scannedImages: [UIImage] = []  // Fixed variable name
     @State private var showingNameAlert = false
     @State private var documentName = ""
+    @State private var isUploading = false // document saving indicator
     
     @Environment(\.presentationMode) private var presentationMode: Binding<PresentationMode>
     @ObservedObject var viewModel: LoginViewModel
     @State private var navigateToLogin = false
     
     var body: some View {
+        ZStack{
             VStack {
                 if container.docs.isEmpty {
                     Text("No scans yet")
@@ -117,19 +119,19 @@ struct CameraView: View {
             .navigationBarBackButtonHidden(true)
             .navigationTitle("Document Scanner")
             .toolbar {
-                        ToolbarItem(placement: .navigationBarLeading) {
-                            Button(action: {
-                                viewModel.signOut()
-                            }) {
-                                HStack {
-                                    Image(systemName: "arrow.left")
-                                        .foregroundColor(.red)
-                                    Text("Log Out")
-                                        .foregroundColor(.red)
-                                }
-                            }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        viewModel.signOut()
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.left")
+                                .foregroundColor(.red)
+                            Text("Log Out")
+                                .foregroundColor(.red)
                         }
                     }
+                }
+            }
             .sheet(isPresented: $showScanner) {
                 ScannerView(scannedImages: $scannedImages)
                     .onDisappear {
@@ -142,7 +144,9 @@ struct CameraView: View {
                 TextField("Document Name", text: $documentName)
                 Button("Save") {
                     Task {
+                        isUploading = true  // Show upload popup
                         await saveDocument()
+                        isUploading = false // Hide upload popup
                     }
                 }
                 Button("Cancel", role: .cancel) {
@@ -150,7 +154,26 @@ struct CameraView: View {
                     documentName = ""
                 }
             }
+            
+            if isUploading {
+                VStack(spacing: 10) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white)) // White spinner
+                        .scaleEffect(1.5) // Make spinner larger
+
+                    Text("Uploading...")
+                        .foregroundColor(.white) // White text
+                        .font(.headline)
+                }
+                .padding()
+                .frame(width: 200, height: 150)
+                .background(Color.gray.opacity(0.9)) // Dark gray background
+                .cornerRadius(12)
+                .shadow(radius: 10)
+                .transition(.opacity)
+            }
         }
+    }
 
     
     private func saveDocument() async {
