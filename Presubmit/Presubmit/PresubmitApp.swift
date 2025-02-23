@@ -19,6 +19,8 @@ class AppDelegate: NSObject, UIApplicationDelegate { // Remove GIDToken - it's n
                 // User already signed in previously, you can update your UI accordingly
                 guard let user = result else { return }
                 print("User restored from previous sign-in: \(user.profile?.name ?? "User")")
+                print("\(user.idToken?.tokenString)")
+                
                 // You might want to notify your app state here that a user is already signed in.
             }
         }

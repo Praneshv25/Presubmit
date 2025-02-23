@@ -17,6 +17,21 @@ class LoginViewModel: ObservableObject {
     @Published var isAuthenticated = false
     @Published var userToken: String?
     
+    private var authHandle: AuthStateDidChangeListenerHandle?
+
+    init() {
+        // Listen for authentication state changes
+        authHandle = Auth.auth().addStateDidChangeListener { [weak self] (auth, user) in
+            self?.isAuthenticated = user != nil
+        }
+    }
+    
+    deinit {
+        if let handle = authHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
+        }
+    }
+    
     
     func signInWithGoogle() {
         isLoading = true

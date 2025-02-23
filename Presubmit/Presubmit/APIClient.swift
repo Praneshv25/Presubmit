@@ -111,17 +111,15 @@ class ImageAPIClient {
         do {
             let (data, response) = try await session.data(for: request)
             
-//            guard let httpResponse = response as? HTTPURLResponse else {
-//                throw ImageProcessingError.invalidResponse
-//            }
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw ImageProcessingError.invalidResponse
+            }
             
-//            switch httpResponse.statusCode {
-            switch 200 {
+            switch httpResponse.statusCode {
             case 200:
                 print("200")
                 let decoder = JSONDecoder()
-                return try decoder.decode(ProcessImageResponse.self, from: jsonData)
-//                return try decoder.decode(ProcessImageResponse.self, from: data)
+                return try decoder.decode(ProcessImageResponse.self, from: data)
             case 401:
                 print("401")
                 throw ImageProcessingError.authenticationError
@@ -137,6 +135,26 @@ class ImageAPIClient {
         } catch {
             print("weirdo")
             throw ImageProcessingError.networkError(error)
+        }
+    }
+
+    func processImagesConcurrently(_ images: [UIImage], symbols: [String] = []) async throws -> [ProcessImageResponse] {
+            // Use a TaskGroup to manage concurrent tasks
+        try await withThrowingTaskGroup(of: ProcessImageResponse.self) { group in
+            // Add a task for each image
+            for image in images {
+                group.addTask {
+                    try await self.processImage(image, symbols: symbols) // Assuming 'self' refers to the class containing 'processImage'
+                }
+            }
+
+            // Collect the results from each task
+            var results: [ProcessImageResponse] = []
+            for try await result in group {
+                results.append(result)
+            }
+
+            return results
         }
     }
 }
