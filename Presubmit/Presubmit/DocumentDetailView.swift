@@ -36,12 +36,12 @@ struct MistakeView: View {
         let w = geometry.size.width//UIScreen.main.bounds.width
         let h = w * CGFloat(image.size.height) / CGFloat(image.size.width)
 
-        let new_x = CGFloat(1000 - x) / 1000.0 * w
+        let new_x = CGFloat(x) / 1000.0 * w
         let new_y = CGFloat(y) / 1000.0 * h
         
         print((new_x, new_y))
         
-        return CGPoint(x: new_x, y: new_y)
+        return CGPoint(x: new_x, y: new_y + 25)
     }
 
     var body: some View {
@@ -49,10 +49,10 @@ struct MistakeView: View {
             ForEach(mistakes.indices, id: \.self) { i in
                 if !mistakes[i].mistakes.isEmpty {
                     Circle()
-                        .fill(Color.red.opacity(0.6))
+                        .fill(Color.red.opacity(0.4))
                         .frame(width: 50, height: 50)
                         .position(
-                            convert_coord(x: CGFloat(mistakes[i].box_2d[0]), y: CGFloat(mistakes[i].box_2d[1]), image: documentImage)
+                            convert_coord(x: CGFloat(mistakes[i].box_2d[1]), y: CGFloat(mistakes[i].box_2d[0]), image: documentImage)
                         )
                         .onTapGesture {
                             selectedMistake = mistakes[i].id
@@ -101,10 +101,9 @@ struct DocumentDetailView: View {
     
     var body: some View {
         // Full screen image
-        GeometryReader { geometry in
-            ZStack {
-                VStack {
-                    
+        VStack {
+            GeometryReader { geometry in
+                ZStack {
                     TabView(selection: $currentPage) {
                         ForEach(0..<document.images.count, id: \.self) { index in
                             Image(uiImage: document.images[index])
@@ -113,27 +112,25 @@ struct DocumentDetailView: View {
                                 .tag(index)
                         }
                     }
-                    .tabViewStyle(.page)
-                    Text("Page \(currentPage + 1) of \(document.images.count)")
-                        .font(.caption)
-                        .padding()
-                    
-                    Text(document.fileName)
-                        .font(.title)
-                    Text("Scanned: \(document.date.formatted())")
-                        .foregroundColor(.gray)
+                    MistakeView(
+                        mistakes: $document.mistakes[currentPage],
+                        documentImage: $document.images[currentPage],
+                        geometry: geometry
+                    )
                 }
-                .padding()
-                .navigationBarBackButtonHidden(false)
-                
-                MistakeView(
-                    mistakes: $document.mistakes[currentPage],
-                    documentImage: $document.images[currentPage],
-                    geometry: geometry
-                )
+                .tabViewStyle(.page)
             }
+            Text("Page \(currentPage + 1) of \(document.images.count)")
+                .font(.caption)
+                .padding()
             
+            Text(document.fileName)
+                .font(.title)
+            Text("Scanned: \(document.date.formatted())")
+                .foregroundColor(.gray)
         }
+        .padding()
+        .navigationBarBackButtonHidden(false)
         .navigationTitle(document.fileName)
         .navigationBarTitleDisplayMode(.inline)
     }
